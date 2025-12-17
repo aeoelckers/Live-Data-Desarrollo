@@ -29,14 +29,15 @@ Dashboard estático listo para GitHub Pages que muestra las noticias más recien
 ## Actualización automática de noticias
 - El archivo `data/news.json` se genera cada 30 minutos mediante GitHub Actions, consultando el RSS público de PortalPortuario (`https://portalportuario.cl/feed/`).
 - Workflow: `.github/workflows/news-fetch.yml`.
-- El Action descarga el feed, lo transforma a JSON y hace commit automático si hay novedades.
-- Variables: utiliza el `GITHUB_TOKEN` que GitHub expone por defecto; no requiere secretos adicionales.
+- El Action descarga el feed, limpia el HTML, crea un resumen breve y lo transforma a JSON con fecha, título, enlace y resumen.
+- Hace commit automático si hay novedades usando el `GITHUB_TOKEN` que GitHub expone por defecto; no requiere secretos adicionales.
 - Disparo manual: desde **Actions → Actualizar noticias PortalPortuario → Run workflow**.
+
+## Experiencia en pantalla
+- Titular del día destacado en grande y, debajo, el resto de noticias del mismo día en tarjetas más compactas con mini-resumen.
+- Tema oscuro, tipografía grande y layout horizontal (noticias a la izquierda, tabla a la derecha).
+- Incluye reloj en vivo y timestamp de última actualización.
 
 ## Desarrollo local
 - No hay dependencias. Basta con abrir `index.html` en el navegador.
 - Para ver cambios en `ufm2.json` o `news.json`, recarga la página o usa el botón **Actualizar** en el panel de noticias.
-
-## Diseño para TV
-- Tema oscuro, tipografía grande y layout horizontal (noticias a la izquierda, tabla a la derecha).
-- Incluye reloj en vivo y timestamp de última actualización.
