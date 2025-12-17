@@ -77,6 +77,17 @@ function renderHeadline(item) {
   }
 
   headlineContainer.innerHTML = '';
+
+  if (item.image) {
+    const figure = document.createElement('div');
+    figure.className = 'headline-figure';
+    const img = document.createElement('img');
+    img.src = item.image;
+    img.alt = item.title || 'Imagen de la noticia';
+    figure.appendChild(img);
+    headlineContainer.appendChild(figure);
+  }
+
   const title = document.createElement('a');
   title.href = item.link;
   title.target = '_blank';
@@ -108,6 +119,9 @@ function renderGrid(items) {
     const card = document.createElement('article');
     card.className = 'news-card';
 
+    const content = document.createElement('div');
+    content.className = 'news-content';
+
     const titleLink = document.createElement('a');
     titleLink.href = item.link;
     titleLink.target = '_blank';
@@ -125,7 +139,21 @@ function renderGrid(items) {
       ? `Publicado: ${formatDate(item.pubDate)}`
       : 'Sin fecha disponible';
 
-    card.append(titleLink, summary, meta);
+    content.append(titleLink, summary, meta);
+    card.appendChild(content);
+
+    if (item.image) {
+      const thumb = document.createElement('div');
+      thumb.className = 'news-thumb';
+      const img = document.createElement('img');
+      img.src = item.image;
+      img.alt = item.title || 'Imagen';
+      thumb.appendChild(img);
+      card.appendChild(thumb);
+    } else {
+      card.classList.add('no-thumb');
+    }
+
     fragment.appendChild(card);
   });
 
@@ -162,9 +190,9 @@ function renderNews(items) {
 
   const sorted = [...items].sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
   const todays = pickToday(sorted);
-  const latestThree = todays.slice(0, 3);
+  const latest = todays.slice(0, 4);
 
-  if (!latestThree.length) {
+  if (!latest.length) {
     headlineContainer.innerHTML = '<p class="empty">Sin noticias disponibles</p>';
     newsGrid.innerHTML = '';
     stopCarousel();
@@ -172,11 +200,11 @@ function renderNews(items) {
   }
 
   carouselIndex = 0;
-  carouselItems = latestThree;
+  carouselItems = latest;
 
-  renderHeadline(latestThree[0]);
-  renderGrid(latestThree.slice(1));
-  startCarousel(latestThree);
+  renderHeadline(latest[0]);
+  renderGrid(latest.slice(1));
+  startCarousel(latest);
 }
 
 async function loadUFM2() {
