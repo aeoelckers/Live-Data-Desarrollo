@@ -29,6 +29,7 @@ jobs:
 
           FEED_URL = "https://portalportuario.cl/feed/"
           OUTPUT = "data/news.json"
+          LIMIT = 3
 
           def fetch_feed(url):
             with urllib.request.urlopen(url) as response:
@@ -74,6 +75,7 @@ jobs:
           xml_bytes = fetch_feed(FEED_URL)
           items = parse_items(xml_bytes)
           items.sort(key=lambda x: x.get('pubDate', ''), reverse=True)
+          items = items[:LIMIT]
 
           payload = {
             'lastUpdated': datetime.now(timezone.utc).isoformat(),
