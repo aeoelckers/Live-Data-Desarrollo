@@ -1,6 +1,7 @@
 const NEWS_ENDPOINT = 'data/news.json';
 const UFM2_ENDPOINT = 'data/ufm2.json';
 const REFRESH_MS = 60 * 1000;
+const CAROUSEL_MS = 60 * 1000;
 
 const headlineContainer = document.getElementById('headline');
 const newsGrid = document.getElementById('news-grid');
@@ -8,6 +9,10 @@ const ufTableBody = document.getElementById('uf-table-body');
 const clockEl = document.getElementById('clock');
 const lastUpdatedEl = document.getElementById('last-updated');
 const refreshButton = document.getElementById('refresh-news');
+
+let carouselItems = [];
+let carouselIndex = 0;
+let carouselTimer = null;
 
 function formatDate(dateStr) {
   const date = new Date(dateStr);
@@ -44,6 +49,7 @@ async function loadNews(showLoadingState = false) {
     newsGrid.innerHTML = '<p class="empty">No se pudieron cargar las noticias.</p>';
     headlineContainer.innerHTML = '';
     lastUpdatedEl.textContent = 'Última actualización: error al consultar news.json';
+    stopCarousel();
   }
 }
 
@@ -127,19 +133,50 @@ function renderGrid(items) {
   newsGrid.appendChild(fragment);
 }
 
+function stopCarousel() {
+  if (carouselTimer) {
+    clearInterval(carouselTimer);
+    carouselTimer = null;
+  }
+}
+
+function startCarousel(items) {
+  stopCarousel();
+  if (items.length <= 1) return;
+  carouselTimer = setInterval(() => {
+    carouselIndex = (carouselIndex + 1) % items.length;
+    const headline = items[carouselIndex];
+    const gridItems = items.filter((_, idx) => idx !== carouselIndex);
+    renderHeadline(headline);
+    renderGrid(gridItems);
+  }, CAROUSEL_MS);
+}
+
 function renderNews(items) {
   if (!items.length) {
     headlineContainer.innerHTML = '<p class="empty">Sin noticias disponibles</p>';
     newsGrid.innerHTML = '';
+    stopCarousel();
     return;
   }
 
   const sorted = [...items].sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
   const todays = pickToday(sorted);
-  const [headline, ...rest] = todays;
+  const latestThree = todays.slice(0, 3);
 
-  renderHeadline(headline);
-  renderGrid(rest);
+  if (!latestThree.length) {
+    headlineContainer.innerHTML = '<p class="empty">Sin noticias disponibles</p>';
+    newsGrid.innerHTML = '';
+    stopCarousel();
+    return;
+  }
+
+  carouselIndex = 0;
+  carouselItems = latestThree;
+
+  renderHeadline(latestThree[0]);
+  renderGrid(latestThree.slice(1));
+  startCarousel(latestThree);
 }
 
 async function loadUFM2() {
