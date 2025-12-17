@@ -1,0 +1,10 @@
+{
+  "lastUpdated": "2024-05-01T00:00:00Z",
+  "zones": [
+    { "zone": "Norte Grande", "value": "45 UF/m²", "note": "Mercado en alza por nuevos proyectos logísticos" },
+    { "zone": "Norte Chico", "value": "38 UF/m²", "note": "Estabilidad intermensual" },
+    { "zone": "Centro", "value": "52 UF/m²", "note": "Mayor demanda industrial" },
+    { "zone": "Santiago Periferia", "value": "60 UF/m²", "note": "Segmento premium consolidado" },
+    { "zone": "Sur", "value": "34 UF/m²", "note": "Incentivos regionales impactan precios" }
+  ]
+}

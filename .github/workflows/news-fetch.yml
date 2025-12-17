@@ -1,0 +1,84 @@
+name: Actualizar noticias PortalPortuario
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Descargar feed y generar news.json
+        run: |
+          python - <<'PY'
+          import json
+          import urllib.request
+          import xml.etree.ElementTree as ET
+          from datetime import datetime, timezone
+
+          FEED_URL = "https://portalportuario.cl/feed/"
+          OUTPUT = "data/news.json"
+
+          def fetch_feed(url):
+            with urllib.request.urlopen(url) as response:
+              return response.read()
+
+          def parse_items(xml_bytes):
+            root = ET.fromstring(xml_bytes)
+            channel = root.find('channel')
+            items = []
+            if channel is None:
+              return items
+
+            for item in channel.findall('item'):
+              title = item.findtext('title', default='Sin título').strip()
+              link = item.findtext('link', default='').strip()
+              pub = item.findtext('pubDate') or ''
+              try:
+                pub_dt = datetime.strptime(pub, '%a, %d %b %Y %H:%M:%S %z')
+                pub_iso = pub_dt.astimezone(timezone.utc).isoformat()
+              except Exception:
+                pub_iso = ''
+
+              items.append({
+                'title': title,
+                'link': link,
+                'pubDate': pub_iso,
+              })
+            return items
+
+          xml_bytes = fetch_feed(FEED_URL)
+          items = parse_items(xml_bytes)
+          items.sort(key=lambda x: x.get('pubDate', ''), reverse=True)
+
+          payload = {
+            'lastUpdated': datetime.now(timezone.utc).isoformat(),
+            'items': items,
+          }
+
+          with open(OUTPUT, 'w', encoding='utf-8') as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+          PY
+
+      - name: Commit y push si hay cambios
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          if ! git diff --quiet; then
+            git add data/news.json
+            git commit -m "chore: actualizar noticias desde PortalPortuario"
+            git push
+          else
+            echo "Sin cambios que publicar"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Oficina - Noticias y UF/m²</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="branding">
+        <div class="logo-circle"></div>
+        <div>
+          <p class="label">Dashboard TV</p>
+          <p class="title">PortalPortuario + UF/m²</p>
+        </div>
+      </div>
+      <div class="time-block">
+        <p id="clock" class="clock">--:--:--</p>
+        <p id="last-updated" class="timestamp">Última actualización: --</p>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel news">
+        <div class="panel-header">
+          <h2>Noticias recientes</h2>
+          <button id="refresh-news" class="ghost-button">Actualizar</button>
+        </div>
+        <ul id="news-list" class="news-list" aria-live="polite"></ul>
+      </section>
+
+      <aside class="panel sidebar">
+        <div class="panel-header">
+          <h2>UF/m² Chile</h2>
+        </div>
+        <table class="uf-table">
+          <thead>
+            <tr>
+              <th>Zona</th>
+              <th>UF/m²</th>
+              <th>Observación</th>
+            </tr>
+          </thead>
+          <tbody id="uf-table-body"></tbody>
+        </table>
+      </aside>
+    </main>
+  </div>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
