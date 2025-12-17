@@ -29,7 +29,7 @@ jobs:
 
           FEED_URL = "https://portalportuario.cl/feed/"
           OUTPUT = "data/news.json"
-          LIMIT = 3
+          LIMIT = 4
 
           def fetch_feed(url):
             with urllib.request.urlopen(url) as response:
@@ -45,6 +45,22 @@ jobs:
               return text
             truncated = text[:limit].rsplit(' ', 1)[0]
             return f"{truncated}…"
+
+          def extract_image(elem):
+            # Try media:content or enclosure with url
+            for child in list(elem):
+              tag = child.tag.lower()
+              if tag.endswith('content') or tag.endswith('thumbnail') or tag.endswith('enclosure'):
+                url = child.attrib.get('url') or child.attrib.get('href')
+                if url:
+                  return url
+            # Fallback: look for <enclosure url="...">
+            enclosure = elem.find('enclosure')
+            if enclosure is not None:
+              url = enclosure.attrib.get('url')
+              if url:
+                return url
+            return None
 
           def parse_items(xml_bytes):
             root = ET.fromstring(xml_bytes)
@@ -64,11 +80,14 @@ jobs:
               except Exception:
                 pub_iso = ''
 
+              image = extract_image(item)
+
               items.append({
                 'title': title,
                 'link': link,
                 'pubDate': pub_iso,
                 'summary': shrink(description),
+                'image': image,
               })
             return items
 
