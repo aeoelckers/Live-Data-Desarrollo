@@ -44,11 +44,18 @@ body {
 }
 
 .logo-circle {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
   background: linear-gradient(135deg, #22d3ee, #6366f1);
   box-shadow: var(--shadow);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  color: #0b1020;
 }
 
 .label {
