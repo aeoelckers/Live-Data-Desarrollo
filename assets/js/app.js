@@ -15,6 +15,7 @@ let carouselIndex = 0;
 let carouselTimer = null;
 
 function formatDate(dateStr) {
+  if (!dateStr) return 'Sin fecha disponible';
   const date = new Date(dateStr);
   return date.toLocaleString('es-CL', {
     day: '2-digit',
@@ -70,6 +71,16 @@ function getSummary(item) {
   return 'Sin resumen disponible.';
 }
 
+function createSafeImage(src, altText = 'Imagen de la noticia') {
+  if (!src) return null;
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = altText;
+  img.referrerPolicy = 'no-referrer';
+  img.onerror = () => img.remove();
+  return img;
+}
+
 function renderHeadline(item) {
   if (!item) {
     headlineContainer.innerHTML = '<p class="empty">Sin noticias del día</p>';
@@ -81,11 +92,11 @@ function renderHeadline(item) {
   if (item.image) {
     const figure = document.createElement('div');
     figure.className = 'headline-figure';
-    const img = document.createElement('img');
-    img.src = item.image;
-    img.alt = item.title || 'Imagen de la noticia';
-    figure.appendChild(img);
-    headlineContainer.appendChild(figure);
+    const img = createSafeImage(item.image, item.title || 'Imagen de la noticia');
+    if (img) {
+      figure.appendChild(img);
+      headlineContainer.appendChild(figure);
+    }
   }
 
   const title = document.createElement('a');
@@ -145,11 +156,13 @@ function renderGrid(items) {
     if (item.image) {
       const thumb = document.createElement('div');
       thumb.className = 'news-thumb';
-      const img = document.createElement('img');
-      img.src = item.image;
-      img.alt = item.title || 'Imagen';
-      thumb.appendChild(img);
-      card.appendChild(thumb);
+      const img = createSafeImage(item.image, item.title || 'Imagen');
+      if (img) {
+        thumb.appendChild(img);
+        card.appendChild(thumb);
+      } else {
+        card.classList.add('no-thumb');
+      }
     } else {
       card.classList.add('no-thumb');
     }
@@ -188,7 +201,7 @@ function renderNews(items) {
     return;
   }
 
-  const sorted = [...items].sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+  const sorted = [...items].sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
   const todays = pickToday(sorted);
   const latest = todays.slice(0, 4);
 
