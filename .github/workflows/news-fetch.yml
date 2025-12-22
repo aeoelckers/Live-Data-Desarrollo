@@ -3,20 +3,22 @@ name: Actualizar noticias PortalPortuario (titulares)
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 * * * *" # cada hora
+    - cron: "0 * * * *" # cada hora (puedes cambiarlo a semanal si quieres)
 
 permissions:
   contents: write
 
+concurrency:
+  group: news-fetch
+  cancel-in-progress: true
+
 jobs:
   fetch:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo (on main, full history)
+      - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          ref: main
           fetch-depth: 0
           persist-credentials: true
 
@@ -34,30 +36,17 @@ jobs:
         run: |
           python scripts/fetch_titulares.py
 
-      - name: Commit & push (safe)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit changes if any
         run: |
-          set -e
-
-          # Asegurar que estamos parados en main (no detached HEAD)
-          git checkout main
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add data/news.json
-
-          # Si no hay cambios, salir OK (sin fallo)
           if git diff --staged --quiet; then
             echo "No changes to commit."
             exit 0
           fi
 
-          git commit -m "Update news.json (PortalPortuario titulares)"
-
-          # Evitar error por no-fast-forward
-          git pull --rebase --autostash origin main
-
-          # Push con token del workflow
-          git push origin main
+          git commit -m "Update news.json (PortalPortuario)"
+          git pull --rebase origin main
+          git push origin HEAD:main
