@@ -73,7 +73,6 @@ function renderSidebar(items, heroIdx) {
     return;
   }
 
-  // Lateral: siguientes 6 (saltando el hero actual)
   const listItems = items
     .filter((_, idx) => idx !== heroIdx)
     .slice(0, 6);
@@ -89,7 +88,6 @@ function renderSidebar(items, heroIdx) {
     const li = document.createElement('li');
     li.className = 'news-item';
 
-    // Thumb
     const thumb = document.createElement('div');
     thumb.className = 'news-thumb';
 
@@ -103,7 +101,6 @@ function renderSidebar(items, heroIdx) {
     }
     li.appendChild(thumb);
 
-    // Text
     const text = document.createElement('div');
     text.className = 'news-text';
 
@@ -148,14 +145,12 @@ function startHeroRotation() {
 }
 
 function normalizeNewsItems(items) {
-  // Ordenar por fecha descendente (si viene)
   const sorted = [...items].sort((a, b) => {
     const da = new Date(a.pubDate || 0).getTime();
     const db = new Date(b.pubDate || 0).getTime();
     return db - da;
   });
 
-  // Filtrar basura: si viene algún “item” genérico (por seguridad)
   const filtered = sorted.filter((it) => {
     const t = (it.title || '').toLowerCase();
     const l = (it.link || '').toLowerCase();
@@ -175,23 +170,26 @@ async function loadNews(showLoading = false) {
     heroMeta.textContent = '';
     newsList.innerHTML = `<li class="empty">Cargando...</li>`;
     newsNote.style.display = 'none';
+    lastUpdatedEl.textContent = 'Última actualización: --';
   }
 
   try {
-    const res = await fetch(`${NEWS_ENDPOINT}?_=${Date.now()}`);
-    if (!res.ok) throw new Error('No se pudo obtener news.json');
-    const data = await res.json();
+    const url = `${NEWS_ENDPOINT}?_=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
 
-    // timestamp arriba a la derecha
-    if (data.lastUpdated) {
-      lastUpdatedEl.textContent = `Última actualización: ${formatDate(data.lastUpdated)}`;
-    } else if (data.updatedAt) {
-      lastUpdatedEl.textContent = `Última actualización: ${formatDate(data.updatedAt)}`;
-    } else {
-      lastUpdatedEl.textContent = `Última actualización: --`;
+    if (!res.ok) {
+      throw new Error(`news.json HTTP ${res.status}`);
     }
 
-    // nota si el backend dejó aviso
+    const data = await res.json();
+
+    const stamp = data.lastUpdated || data.updatedAt || data.checkedAt || null;
+    if (stamp) {
+      lastUpdatedEl.textContent = `Última actualización: ${formatDate(stamp)}`;
+    } else {
+      lastUpdatedEl.textContent = 'Última actualización: --';
+    }
+
     if (data.note) {
       newsNote.textContent = data.note;
       newsNote.style.display = 'block';
@@ -204,7 +202,7 @@ async function loadNews(showLoading = false) {
       heroTitle.textContent = 'Sin noticias disponibles';
       heroSummary.textContent = '';
       heroMeta.textContent = '';
-      newsList.innerHTML = `<li class="empty">Sin noticias disponibles</li>`;
+      newsList.innerHTML = `<li class="empty">news.json sin items (revisa workflow)</li>`;
       stopHeroRotation();
       return;
     }
@@ -216,24 +214,28 @@ async function loadNews(showLoading = false) {
     renderSidebar(currentItems, heroIndex);
     startHeroRotation();
   } catch (err) {
-    console.error(err);
+    console.error('ERROR loadNews:', err);
+
     heroTitle.textContent = 'No se pudieron cargar las noticias';
-    heroSummary.textContent = '';
+    heroSummary.textContent = 'Revisa si data/news.json existe y si el workflow está OK.';
     heroMeta.textContent = '';
-    newsList.innerHTML = `<li class="empty">Error al cargar news.json</li>`;
-    lastUpdatedEl.textContent = `Última actualización: error`;
+    newsList.innerHTML = `<li class="empty">Error leyendo data/news.json</li>`;
+    newsNote.textContent = `Error: ${err?.message || err}`;
+    newsNote.style.display = 'block';
+
+    lastUpdatedEl.textContent = 'Última actualización: error';
     stopHeroRotation();
   }
 }
 
 async function loadUFM2() {
   try {
-    const res = await fetch(`${UFM2_ENDPOINT}?_=${Date.now()}`);
-    if (!res.ok) throw new Error('No se pudo obtener ufm2.json');
+    const res = await fetch(`${UFM2_ENDPOINT}?_=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`ufm2.json HTTP ${res.status}`);
     const data = await res.json();
     renderUFM2(data.zones || []);
   } catch (err) {
-    console.error(err);
+    console.error('ERROR loadUFM2:', err);
     ufTableBody.innerHTML = '<tr><td colspan="3" class="empty">No se pudo cargar ufm2.json</td></tr>';
   }
 }
