@@ -13,8 +13,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repo (on main, full history)
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -26,22 +30,34 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4 lxml python-dateutil
 
-      - name: Fetch titulares (no-fail)
+      - name: Fetch titulares
         run: |
           python scripts/fetch_titulares.py
 
-      - name: Commit changes if any
+      - name: Commit & push (safe)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -e
+
+          # Asegurar que estamos parados en main (no detached HEAD)
+          git checkout main
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add data/news.json
 
+          # Si no hay cambios, salir OK (sin fallo)
           if git diff --staged --quiet; then
             echo "No changes to commit."
             exit 0
           fi
 
           git commit -m "Update news.json (PortalPortuario titulares)"
-          git pull --rebase
-          git push
+
+          # Evitar error por no-fast-forward
+          git pull --rebase --autostash origin main
+
+          # Push con token del workflow
+          git push origin main
