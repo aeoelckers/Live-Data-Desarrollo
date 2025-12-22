@@ -2,10 +2,11 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Oficina - Noticias y UF/m²</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard TV - PortalPortuario + UF/m²</title>
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
+
 <body>
   <div class="page">
     <header class="header">
@@ -16,6 +17,7 @@
           <p class="title">PortalPortuario + UF/m²</p>
         </div>
       </div>
+
       <div class="time-block">
         <p id="clock" class="clock">--:--:--</p>
         <p id="last-updated" class="timestamp">Última actualización: --</p>
@@ -23,32 +25,57 @@
     </header>
 
     <main class="layout">
-      <section class="panel news">
+      <!-- NOTICIAS -->
+      <section class="panel panel-news">
         <div class="panel-header">
           <h2>Noticias recientes</h2>
-          <button id="refresh-news" class="ghost-button">Actualizar</button>
+          <button id="refresh-news" class="btn">Actualizar</button>
         </div>
-        <div class="news-area">
-          <article id="headline" class="headline-card" aria-live="polite"></article>
-          <div class="news-grid" id="news-grid" aria-live="polite"></div>
+
+        <div class="news-layout">
+          <!-- HERO -->
+          <a id="hero-link" class="hero" href="#" target="_blank" rel="noopener noreferrer">
+            <div id="hero-image" class="hero-image"></div>
+            <div class="hero-overlay">
+              <h1 id="hero-title" class="hero-title">Cargando...</h1>
+              <p id="hero-summary" class="hero-summary"></p>
+              <p id="hero-meta" class="hero-meta"></p>
+            </div>
+          </a>
+
+          <!-- LISTA DERECHA -->
+          <aside class="sidebar">
+            <h3 class="sidebar-title">NOTICIAS RECIENTES</h3>
+            <ul id="news-list" class="news-list">
+              <li class="empty">Cargando...</li>
+            </ul>
+          </aside>
         </div>
+
+        <p id="news-note" class="note" style="display:none;"></p>
       </section>
 
-      <aside class="panel sidebar">
+      <!-- UF/M2 -->
+      <section class="panel panel-uf">
         <div class="panel-header">
           <h2>UF/m² Chile</h2>
         </div>
-        <table class="uf-table">
-          <thead>
-            <tr>
-              <th>Zona</th>
-              <th>UF/m²</th>
-              <th>Observación</th>
-            </tr>
-          </thead>
-          <tbody id="uf-table-body"></tbody>
-        </table>
-      </aside>
+
+        <div class="uf-table-wrap">
+          <table class="uf-table">
+            <thead>
+              <tr>
+                <th>Zona</th>
+                <th>UF/m²</th>
+                <th>Observación</th>
+              </tr>
+            </thead>
+            <tbody id="uf-table-body">
+              <tr><td colspan="3" class="empty">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </main>
   </div>
 
