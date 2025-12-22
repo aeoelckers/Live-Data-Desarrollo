@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import html
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 
@@ -29,13 +30,33 @@ def load_existing():
     return None
 
 def clean_text(s: str) -> str:
-    return re.sub(r"\s+", " ", (s or "")).strip()
-
-def strip_html(html: str) -> str:
-    if not html:
+    s = (s or "").strip()
+    if not s:
         return ""
-    soup = BeautifulSoup(html, "lxml")
-    return clean_text(soup.get_text(" ", strip=True))
+
+    # 1) Decodificar entidades HTML (&amp; etc)
+    s = html.unescape(s)
+
+    # 2) A veces vienen strings mal-decoded (Ã±). Normalizamos en lo posible:
+    #    - si el texto parece mojibake típico, intentamos repararlo
+    #    Nota: no siempre aplica, pero ayuda en muchos feeds.
+    if "Ã" in s or "Â" in s:
+        try:
+            s = s.encode("latin1", errors="ignore").decode("utf-8", errors="ignore")
+        except Exception:
+            pass
+
+    # 3) Normalizar espacios
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+def strip_html(html_str: str) -> str:
+    if not html_str:
+        return ""
+    html_str = html.unescape(html_str)
+    soup = BeautifulSoup(html_str, "lxml")
+    txt = soup.get_text(" ", strip=True)
+    return clean_text(txt)
 
 def safe_portal_url(u: str) -> bool:
     try:
@@ -44,77 +65,23 @@ def safe_portal_url(u: str) -> bool:
     except Exception:
         return False
 
-def main():
-    existing = load_existing()
-    now_iso = datetime.now(timezone.utc).isoformat()
+def looks_like_not_an_article(title: str, link: str) -> bool:
+    """
+    Filtra cosas tipo 'Titulares - PortalPortuario' / páginas utilitarias.
+    Ajusta aquí si aparecen más.
+    """
+    t = (title or "").lower().strip()
+    l = (link or "").lower().strip()
 
-    try:
-        r = requests.get(FEED_URL, timeout=25, headers={"User-Agent": UA})
-        r.raise_for_status()
-
-        soup = BeautifulSoup(r.text, "xml")
-        entries = soup.find_all("item")
-
-        items = []
-        for it in entries[:MAX_ITEMS]:
-            title = clean_text(it.title.get_text()) if it.title else None
-            link = clean_text(it.link.get_text()) if it.link else None
-            pub = clean_text(it.pubDate.get_text()) if it.pubDate else None
-            desc = it.description.get_text() if it.description else ""
-            summary = strip_html(desc)
-
-            if not title or not link:
-                continue
-            if not safe_portal_url(link):
-                continue
-
-            pub_iso = None
-            if pub:
-                try:
-                    pub_iso = dateparser.parse(pub).astimezone(timezone.utc).isoformat()
-                except Exception:
-                    pub_iso = None
-
-            # “resumen TV”
-            if summary and len(summary) > 220:
-                summary = summary[:217] + "..."
-
-            items.append({
-                "title": title,
-                "link": link,
-                "pubDate": pub_iso or now_iso,
-                "summary": summary or (title[:160] + ("..." if len(title) > 160 else "")),
-                "image": None
-            })
-
-        if len(items) < 3:
-            raise RuntimeError("RSS devolvió pocos items (inesperado).")
-
-        payload = {
-            "source": FEED_URL,
-            "lastUpdated": now_iso,
-            "items": items
-        }
-        save(payload)
-        print(f"OK RSS: {len(items)} items -> {OUT}")
-
-    except Exception as e:
-        # No fallar: mantener lo último bueno
-        if existing:
-            existing["checkedAt"] = now_iso
-            existing["note"] = f"RSS fetch failed; kept last good data. Error: {e}"
-            save(existing)
-            print(f"WARN: RSS falló, mantuve {OUT}. Error: {e}")
-        else:
-            payload = {
-                "source": FEED_URL,
-                "lastUpdated": None,
-                "checkedAt": now_iso,
-                "items": [],
-                "note": f"RSS fetch failed and no previous file. Error: {e}"
-            }
-            save(payload)
-            print(f"WARN: no había {OUT}; se creó vacío. Error: {e}")
-
-if __name__ == "__main__":
-    main()
+    # títulos muy genéricos
+    bad_title_patterns = [
+        "titulares - portalportuario",
+        "titulares – portalportuario",
+        "titulares portalportuario",
+        "estado de puertos - portalportuario",
+        "estado de puertos – portalportuario",
+        "informe de lectoría - portalportuario",
+        "informe de lectoria - portalportuario",
+    ]
+    if any(p in t for p in bad_title_patterns):
+        return True
