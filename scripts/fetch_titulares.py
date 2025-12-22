@@ -24,21 +24,30 @@ def save(payload):
         json.dump(payload, f, ensure_ascii=False, indent=2)
 
 def clean_text(s: str) -> str:
-    s = re.sub(r"\s+", " ", s or "").strip()
-    return s
+    return re.sub(r"\s+", " ", (s or "")).strip()
+
+def make_summary(title: str) -> str:
+    # Resumen simple “tipo TV” si no hay bajada disponible
+    t = clean_text(title)
+    if len(t) <= 120:
+        return t
+    return t[:117] + "..."
 
 def main():
     existing = load_existing()
+    now_iso = datetime.now(timezone.utc).isoformat()
 
     try:
-        r = requests.get(URL, timeout=20, headers={
-            "User-Agent": "Mozilla/5.0 (compatible; SitransDashboard/1.0)"
-        })
+        r = requests.get(
+            URL,
+            timeout=25,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; LiveDataDashboard/1.0)"}
+        )
         r.raise_for_status()
+
         soup = BeautifulSoup(r.text, "lxml")
 
-        # Intento genérico: tomar links a artículos dentro del listado de titulares
-        # y usar el texto del <a> como título.
+        # Tomar links a notas del sitio desde /titulares/
         items = []
         for a in soup.select("a"):
             href = a.get("href", "")
@@ -46,8 +55,6 @@ def main():
 
             if not href or not title:
                 continue
-
-            # filtrar cosas típicas (menú, tags, etc.)
             if "portalportuario.cl" not in href:
                 continue
             if "/tag/" in href or "/category/" in href:
@@ -55,9 +62,18 @@ def main():
             if len(title) < 25:
                 continue
 
-            items.append({"title": title, "link": href})
+            items.append({
+                "title": title,
+                "link": href,
+                # PortalPortuario en /titulares/ no siempre trae fecha fácil.
+                # Para no romper el front, le ponemos pubDate = ahora.
+                "pubDate": now_iso,
+                "summary": make_summary(title),
+                # si después quieres imágenes, podemos scrapear la nota individual
+                "image": None
+            })
 
-        # dedupe por link manteniendo orden
+        # Dedupe por link
         seen = set()
         uniq = []
         for it in items:
@@ -69,30 +85,28 @@ def main():
                 break
 
         if len(uniq) < 3:
-            raise RuntimeError("Pocos titulares encontrados (posible cambio HTML).")
+            raise RuntimeError("Pocos titulares encontrados (posible cambio HTML / bloqueo).")
 
         payload = {
             "source": URL,
-            "updatedAt": datetime.now(timezone.utc).isoformat(),
+            "lastUpdated": now_iso,   # <-- clave para tu app.js
             "items": uniq
         }
-
         save(payload)
         print(f"OK: guardados {len(uniq)} titulares en {OUT}")
 
     except Exception as e:
-        # NO FALLAR: mantener existente
+        # NO FALLAR: mantener el último news.json válido
         if existing:
-            existing["checkedAt"] = datetime.now(timezone.utc).isoformat()
+            existing["checkedAt"] = now_iso
             existing["note"] = f"Fetch failed; kept last good data. Error: {e}"
             save(existing)
             print(f"WARN: fallo fetch, se mantuvo {OUT}. Error: {e}")
         else:
-            # si no existe nada aún, generar vacío pero válido y NO fallar
             payload = {
                 "source": URL,
-                "updatedAt": None,
-                "checkedAt": datetime.now(timezone.utc).isoformat(),
+                "lastUpdated": None,
+                "checkedAt": now_iso,
                 "items": [],
                 "note": f"Fetch failed and no previous file. Error: {e}"
             }
