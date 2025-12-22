@@ -27,11 +27,11 @@ def clean_text(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "")).strip()
 
 def make_summary(title: str) -> str:
-    # Resumen simple “tipo TV” si no hay bajada disponible
+    # Resumen simple tipo TV. Si quieres algo mejor, se puede scrapear cada nota.
     t = clean_text(title)
-    if len(t) <= 120:
+    if len(t) <= 130:
         return t
-    return t[:117] + "..."
+    return t[:127] + "..."
 
 def main():
     existing = load_existing()
@@ -44,11 +44,10 @@ def main():
             headers={"User-Agent": "Mozilla/5.0 (compatible; LiveDataDashboard/1.0)"}
         )
         r.raise_for_status()
-
         soup = BeautifulSoup(r.text, "lxml")
 
-        # Tomar links a notas del sitio desde /titulares/
-        items = []
+        # Tomar links a notas desde /titulares/
+        raw_items = []
         for a in soup.select("a"):
             href = a.get("href", "")
             title = clean_text(a.get_text(" ", strip=True))
@@ -62,21 +61,20 @@ def main():
             if len(title) < 25:
                 continue
 
-            items.append({
+            raw_items.append({
                 "title": title,
                 "link": href,
-                # PortalPortuario en /titulares/ no siempre trae fecha fácil.
-                # Para no romper el front, le ponemos pubDate = ahora.
+                # No siempre hay fecha fácil en la página de titulares,
+                # así que usamos now_iso para no romper el front.
                 "pubDate": now_iso,
                 "summary": make_summary(title),
-                # si después quieres imágenes, podemos scrapear la nota individual
                 "image": None
             })
 
-        # Dedupe por link
+        # Dedupe por link manteniendo orden
         seen = set()
         uniq = []
-        for it in items:
+        for it in raw_items:
             if it["link"] in seen:
                 continue
             seen.add(it["link"])
@@ -89,14 +87,14 @@ def main():
 
         payload = {
             "source": URL,
-            "lastUpdated": now_iso,   # <-- clave para tu app.js
+            "lastUpdated": now_iso,
             "items": uniq
         }
         save(payload)
         print(f"OK: guardados {len(uniq)} titulares en {OUT}")
 
     except Exception as e:
-        # NO FALLAR: mantener el último news.json válido
+        # NO FALLAR: mantener último news.json si existe
         if existing:
             existing["checkedAt"] = now_iso
             existing["note"] = f"Fetch failed; kept last good data. Error: {e}"
