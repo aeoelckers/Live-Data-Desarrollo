@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Desarrollo Informa</title>
+  <title>Inmobiliario Chile</title>
 
   <!-- Favicon: letra D en azul (SVG inline) -->
   <link rel="icon" type="image/svg+xml"
@@ -17,7 +17,7 @@
     <header class="header">
       <div class="branding">
         <div class="logo-circle" aria-label="Logo">D</div>
-        <h1 class="title">Desarrollo Informa</h1>
+        <h1 class="title">Inmobiliario Chile</h1>
       </div>
 
       <div class="time-block">
@@ -45,13 +45,13 @@
             </div>
           </a>
 
-          <!-- LISTA DERECHA -->
-          <aside class="sidebar">
+          <!-- LISTA -->
+          <div class="news-stack">
             <p class="sidebar-title">NOTICIAS RECIENTES</p>
             <ul id="news-list" class="news-list">
               <li class="empty">Cargando…</li>
             </ul>
-          </aside>
+          </div>
         </div>
 
         <p id="news-note" class="note"></p>
@@ -61,6 +61,7 @@
       <section class="panel">
         <div class="panel-header">
           <h2>UF/m² Chile</h2>
+          <p id="selected-news-label" class="selected-news-label">Noticia seleccionada: --</p>
         </div>
 
         <div class="uf-table-wrap">
@@ -70,6 +71,7 @@
                 <th>Zona</th>
                 <th>UF/m²</th>
                 <th>Observación</th>
+                <th>Noticia</th>
               </tr>
             </thead>
             <tbody id="uf-table-body">
