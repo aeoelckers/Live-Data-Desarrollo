@@ -50,6 +50,15 @@ def clean_html(value: str) -> str:
     return text
 
 
+def extract_image_from_html(value: str):
+    soup = BeautifulSoup(value or "", "lxml")
+    for img in soup.find_all("img"):
+        src = img.get("src")
+        if src and not src.startswith("data:"):
+            return src.strip()
+    return None
+
+
 def get(url: str, timeout=25) -> requests.Response:
     response = requests.get(url, timeout=timeout, headers={"User-Agent": UA})
     if not response.encoding or response.encoding.lower() == "iso-8859-1":
@@ -93,6 +102,9 @@ def parse_feed_items(xml_text: str):
             if candidate is not None and candidate.get("url"):
                 image = candidate.get("url")
                 break
+
+        if not image:
+            image = extract_image_from_html(content_encoded or description or "")
 
         if not title or not link:
             continue

@@ -18,10 +18,15 @@ const listEl = document.getElementById('news-list');
 const noteEl = document.getElementById('news-note');
 
 const ufBody = document.getElementById('uf-table-body');
+const featuredLink = document.getElementById('featured-link');
+const featuredTitle = document.getElementById('featured-title');
+const featuredSummary = document.getElementById('featured-summary');
+const featuredMeta = document.getElementById('featured-meta');
 
 let itemsCache = [];
 let rotateIdx = 0;
 let rotateTimer = null;
+let selectedIdx = null;
 
 function formatDate(dateStr) {
   if (!dateStr) return 'Sin fecha';
@@ -72,6 +77,32 @@ function setHero(item) {
     : 'linear-gradient(135deg, rgba(31,182,255,.35), rgba(58,123,213,.25))';
 }
 
+function setFeatured(item) {
+  if (!item) {
+    featuredTitle.textContent = 'Selecciona una noticia';
+    featuredSummary.textContent = '';
+    featuredMeta.textContent = '';
+    featuredLink.href = '#';
+    return;
+  }
+
+  featuredTitle.textContent = safeText(item.title) || 'Sin título';
+  featuredSummary.textContent = safeText(item.summary) || '';
+  featuredMeta.textContent = item.pubDate ? `Publicado: ${formatDate(item.pubDate)}` : 'PortalPortuario';
+  featuredLink.href = item.link || '#';
+}
+
+function highlightSelected() {
+  const items = listEl.querySelectorAll('.news-item');
+  items.forEach((li) => li.classList.remove('is-selected'));
+  if (selectedIdx === null) return;
+
+  const selected = listEl.querySelector(`[data-index="${selectedIdx}"]`);
+  if (selected) {
+    selected.classList.add('is-selected');
+  }
+}
+
 function renderList(items, heroIndex = 0) {
   listEl.innerHTML = '';
 
@@ -88,6 +119,16 @@ function renderList(items, heroIndex = 0) {
 
     const li = document.createElement('li');
     li.className = 'news-item';
+    li.dataset.index = String(idx);
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'news-link';
+    button.addEventListener('click', () => {
+      selectedIdx = idx;
+      setFeatured(it);
+      highlightSelected();
+    });
 
     const link = document.createElement('a');
     link.className = 'news-link';
@@ -116,11 +157,13 @@ function renderList(items, heroIndex = 0) {
     content.appendChild(title);
     content.appendChild(meta);
 
-    link.appendChild(thumb);
-    link.appendChild(content);
-    li.appendChild(link);
+    button.appendChild(thumb);
+    button.appendChild(content);
+    li.appendChild(button);
     listEl.appendChild(li);
   });
+
+  highlightSelected();
 }
 
 function updateClock() {
@@ -143,6 +186,9 @@ function startRotation() {
     rotateIdx = (rotateIdx + 1) % itemsCache.length;
     setHero(itemsCache[rotateIdx]);
     renderList(itemsCache, rotateIdx);
+    if (selectedIdx === null) {
+      setFeatured(itemsCache[rotateIdx]);
+    }
   }, ROTATE_MS);
 }
 
@@ -162,6 +208,9 @@ async function loadNews() {
 
     itemsCache = items;
     rotateIdx = 0;
+    if (selectedIdx !== null && selectedIdx >= itemsCache.length) {
+      selectedIdx = null;
+    }
 
     setHero(itemsCache[rotateIdx]);
     renderList(itemsCache, rotateIdx);
@@ -172,11 +221,15 @@ async function loadNews() {
       : 'Actualización RSS no disponible';
 
     startRotation();
+    if (selectedIdx === null) {
+      setFeatured(itemsCache[rotateIdx]);
+    }
   } catch (error) {
     noteEl.textContent = 'No fue posible cargar las noticias.';
     updateLastUpdated(null);
     setHero(null);
     renderList([]);
+    setFeatured(null);
     if (rotateTimer) {
       clearInterval(rotateTimer);
       rotateTimer = null;
