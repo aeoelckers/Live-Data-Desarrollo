@@ -3,7 +3,7 @@ name: Actualizar noticias PortalPortuario (titulares)
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 * * * *" # cada hora (puedes cambiarlo a semanal si quieres)
+    - cron: "0 12 * * *" # una vez al día (UTC)
 
 permissions:
   contents: write
