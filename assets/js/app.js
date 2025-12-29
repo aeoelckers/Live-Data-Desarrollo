@@ -130,6 +130,12 @@ function renderList(items, heroIndex = 0) {
       highlightSelected();
     });
 
+    const link = document.createElement('a');
+    link.className = 'news-link';
+    link.href = it.link || '#';
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+
     const thumb = document.createElement('div');
     thumb.className = 'news-thumb';
     const img = safeText(it.image);
