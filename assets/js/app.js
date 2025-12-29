@@ -127,6 +127,14 @@ function updateClock() {
   clockEl.textContent = formatClock();
 }
 
+function updateLastUpdated(value) {
+  if (!value) {
+    lastUpdatedEl.textContent = 'Última actualización: --';
+    return;
+  }
+  lastUpdatedEl.textContent = `Última actualización: ${formatDate(value)}`;
+}
+
 function startRotation() {
   if (rotateTimer) clearInterval(rotateTimer);
   if (!itemsCache.length) return;
@@ -158,14 +166,15 @@ async function loadNews() {
     setHero(itemsCache[rotateIdx]);
     renderList(itemsCache, rotateIdx);
 
-    const updateLabel = data.lastUpdated
-      ? `Última actualización RSS: ${formatDate(data.lastUpdated)}`
+    updateLastUpdated(data.lastUpdated);
+    noteEl.textContent = data.lastUpdated
+      ? `Actualizado desde RSS: ${formatDate(data.lastUpdated)}`
       : 'Actualización RSS no disponible';
-    noteEl.textContent = updateLabel;
 
     startRotation();
   } catch (error) {
     noteEl.textContent = 'No fue posible cargar las noticias.';
+    updateLastUpdated(null);
     setHero(null);
     renderList([]);
     if (rotateTimer) {
@@ -215,8 +224,3 @@ updateClock();
 setInterval(updateClock, 1000);
 refreshAll();
 setInterval(refreshAll, REFRESH_MS);
-
-lastUpdatedEl.textContent = `Última actualización: ${formatDate(new Date().toISOString())}`;
-setInterval(() => {
-  lastUpdatedEl.textContent = `Última actualización: ${formatDate(new Date().toISOString())}`;
-}, 30 * 1000);
