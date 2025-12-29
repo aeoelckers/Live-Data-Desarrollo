@@ -27,6 +27,10 @@ let itemsCache = [];
 let rotateIdx = 0;
 let rotateTimer = null;
 let selectedIdx = null;
+let selectedNews = null;
+let ufData = [];
+
+const UFM2_STORAGE_KEY = 'ufm2Data';
 
 function formatDate(dateStr) {
   if (!dateStr) return 'Sin fecha';
@@ -77,21 +81,6 @@ function setHero(item) {
     : 'linear-gradient(135deg, rgba(31,182,255,.35), rgba(58,123,213,.25))';
 }
 
-function setFeatured(item) {
-  if (!item) {
-    featuredTitle.textContent = 'Selecciona una noticia';
-    featuredSummary.textContent = '';
-    featuredMeta.textContent = '';
-    featuredLink.href = '#';
-    return;
-  }
-
-  featuredTitle.textContent = safeText(item.title) || 'Sin título';
-  featuredSummary.textContent = safeText(item.summary) || '';
-  featuredMeta.textContent = item.pubDate ? `Publicado: ${formatDate(item.pubDate)}` : 'PortalPortuario';
-  featuredLink.href = item.link || '#';
-}
-
 function highlightSelected() {
   const items = listEl.querySelectorAll('.news-item');
   items.forEach((li) => li.classList.remove('is-selected'));
@@ -126,15 +115,10 @@ function renderList(items, heroIndex = 0) {
     button.className = 'news-link';
     button.addEventListener('click', () => {
       selectedIdx = idx;
-      setFeatured(it);
+      selectedNews = it;
       highlightSelected();
+      renderUfm2();
     });
-
-    const link = document.createElement('a');
-    link.className = 'news-link';
-    link.href = it.link || '#';
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
 
     const thumb = document.createElement('div');
     thumb.className = 'news-thumb';
@@ -186,9 +170,6 @@ function startRotation() {
     rotateIdx = (rotateIdx + 1) % itemsCache.length;
     setHero(itemsCache[rotateIdx]);
     renderList(itemsCache, rotateIdx);
-    if (selectedIdx === null) {
-      setFeatured(itemsCache[rotateIdx]);
-    }
   }, ROTATE_MS);
 }
 
@@ -211,6 +192,9 @@ async function loadNews() {
     if (selectedIdx !== null && selectedIdx >= itemsCache.length) {
       selectedIdx = null;
     }
+    if (selectedIdx !== null) {
+      selectedNews = itemsCache[selectedIdx] || null;
+    }
 
     setHero(itemsCache[rotateIdx]);
     renderList(itemsCache, rotateIdx);
@@ -221,15 +205,11 @@ async function loadNews() {
       : 'Actualización RSS no disponible';
 
     startRotation();
-    if (selectedIdx === null) {
-      setFeatured(itemsCache[rotateIdx]);
-    }
   } catch (error) {
     noteEl.textContent = 'No fue posible cargar las noticias.';
     updateLastUpdated(null);
     setHero(null);
     renderList([]);
-    setFeatured(null);
     if (rotateTimer) {
       clearInterval(rotateTimer);
       rotateTimer = null;
@@ -238,30 +218,148 @@ async function loadNews() {
   }
 }
 
+function loadLocalUfm2() {
+  try {
+    const raw = localStorage.getItem(UFM2_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed.zones) ? parsed.zones : null;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+function persistUfm2() {
+  localStorage.setItem(UFM2_STORAGE_KEY, JSON.stringify({ zones: ufData }));
+}
+
+function renderPinnedCell(cell, zone, idx) {
+  cell.innerHTML = '';
+  cell.className = 'pinned-cell';
+
+  if (zone.pinned && zone.pinned.title) {
+    const link = document.createElement('a');
+    link.className = 'pinned-link';
+    link.href = zone.pinned.link || '#';
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = safeText(zone.pinned.title);
+
+    const meta = document.createElement('span');
+    meta.className = 'pinned-meta';
+    meta.textContent = zone.pinned.pubDate ? formatDate(zone.pinned.pubDate) : '';
+
+    const clearButton = document.createElement('button');
+    clearButton.type = 'button';
+    clearButton.className = 'pinned-clear';
+    clearButton.textContent = 'Quitar';
+    clearButton.addEventListener('click', () => {
+      ufData[idx].pinned = null;
+      persistUfm2();
+      renderUfm2();
+    });
+
+    const actions = document.createElement('div');
+    actions.className = 'pinned-actions';
+    actions.appendChild(clearButton);
+
+    cell.appendChild(link);
+    if (meta.textContent) {
+      cell.appendChild(meta);
+    }
+    cell.appendChild(actions);
+    return;
+  }
+
+  const empty = document.createElement('span');
+  empty.className = 'pinned-empty';
+  empty.textContent = 'Selecciona una noticia y fíjala.';
+
+  const pinButton = document.createElement('button');
+  pinButton.type = 'button';
+  pinButton.className = 'pinned-pin';
+  pinButton.textContent = 'Fijar';
+  pinButton.disabled = !selectedNews;
+  pinButton.addEventListener('click', () => {
+    if (!selectedNews) return;
+    ufData[idx].pinned = {
+      title: selectedNews.title,
+      link: selectedNews.link,
+      pubDate: selectedNews.pubDate
+    };
+    persistUfm2();
+    renderUfm2();
+  });
+
+  const actions = document.createElement('div');
+  actions.className = 'pinned-actions';
+  actions.appendChild(pinButton);
+
+  cell.appendChild(empty);
+  cell.appendChild(actions);
+}
+
+function renderUfm2() {
+  ufBody.innerHTML = '';
+
+  if (!ufData.length) {
+    const row = document.createElement('tr');
+    row.innerHTML = '<td colspan="4" class="empty">Sin datos</td>';
+    ufBody.appendChild(row);
+    return;
+  }
+
+  ufData.forEach((zone, idx) => {
+    const row = document.createElement('tr');
+
+    const zoneCell = document.createElement('td');
+    zoneCell.className = 'editable-cell';
+    zoneCell.contentEditable = 'true';
+    zoneCell.textContent = safeText(zone.zone) || '-';
+    zoneCell.addEventListener('blur', () => {
+      ufData[idx].zone = safeText(zoneCell.textContent) || '-';
+      persistUfm2();
+    });
+
+    const valueCell = document.createElement('td');
+    valueCell.className = 'editable-cell';
+    valueCell.contentEditable = 'true';
+    valueCell.textContent = safeText(zone.value) || '-';
+    valueCell.addEventListener('blur', () => {
+      ufData[idx].value = safeText(valueCell.textContent) || '-';
+      persistUfm2();
+    });
+
+    const noteCell = document.createElement('td');
+    noteCell.className = 'editable-cell';
+    noteCell.contentEditable = 'true';
+    noteCell.textContent = safeText(zone.note) || '-';
+    noteCell.addEventListener('blur', () => {
+      ufData[idx].note = safeText(noteCell.textContent) || '-';
+      persistUfm2();
+    });
+
+    const pinnedCell = document.createElement('td');
+    renderPinnedCell(pinnedCell, zone, idx);
+
+    row.appendChild(zoneCell);
+    row.appendChild(valueCell);
+    row.appendChild(noteCell);
+    row.appendChild(pinnedCell);
+    ufBody.appendChild(row);
+  });
+}
+
 async function loadUfm2() {
   try {
     const data = await fetchJson(UFM2_ENDPOINT);
     const zones = Array.isArray(data.zones) ? data.zones : [];
-    ufBody.innerHTML = '';
-
-    if (!zones.length) {
-      const row = document.createElement('tr');
-      row.innerHTML = '<td colspan="3" class="empty">Sin datos</td>';
-      ufBody.appendChild(row);
-      return;
-    }
-
-    zones.forEach((zone) => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${safeText(zone.zone) || '-'}</td>
-        <td>${safeText(zone.value) || '-'}</td>
-        <td>${safeText(zone.note) || '-'}</td>
-      `;
-      ufBody.appendChild(row);
-    });
+    const localZones = loadLocalUfm2();
+    ufData = localZones || zones;
+    renderUfm2();
   } catch (error) {
-    ufBody.innerHTML = '<tr><td colspan="3" class="empty">Error al cargar datos</td></tr>';
+    ufBody.innerHTML = '<tr><td colspan="4" class="empty">Error al cargar datos</td></tr>';
     console.error(error);
   }
 }
