@@ -18,10 +18,7 @@ const listEl = document.getElementById('news-list');
 const noteEl = document.getElementById('news-note');
 
 const ufBody = document.getElementById('uf-table-body');
-const featuredLink = document.getElementById('featured-link');
-const featuredTitle = document.getElementById('featured-title');
-const featuredSummary = document.getElementById('featured-summary');
-const featuredMeta = document.getElementById('featured-meta');
+const selectedNewsLabel = document.getElementById('selected-news-label');
 
 let itemsCache = [];
 let rotateIdx = 0;
@@ -92,6 +89,14 @@ function highlightSelected() {
   }
 }
 
+function updateSelectedNewsLabel() {
+  if (!selectedNews) {
+    selectedNewsLabel.textContent = 'Noticia seleccionada: --';
+    return;
+  }
+  selectedNewsLabel.textContent = `Noticia seleccionada: ${safeText(selectedNews.title)}`;
+}
+
 function renderList(items, heroIndex = 0) {
   listEl.innerHTML = '';
 
@@ -117,6 +122,7 @@ function renderList(items, heroIndex = 0) {
       selectedIdx = idx;
       selectedNews = it;
       highlightSelected();
+      updateSelectedNewsLabel();
       renderUfm2();
     });
 
@@ -194,10 +200,12 @@ async function loadNews() {
     }
     if (selectedIdx !== null) {
       selectedNews = itemsCache[selectedIdx] || null;
+      updateSelectedNewsLabel();
     }
 
     setHero(itemsCache[rotateIdx]);
     renderList(itemsCache, rotateIdx);
+    updateSelectedNewsLabel();
 
     updateLastUpdated(data.lastUpdated);
     noteEl.textContent = data.lastUpdated
@@ -210,6 +218,7 @@ async function loadNews() {
     updateLastUpdated(null);
     setHero(null);
     renderList([]);
+    updateSelectedNewsLabel();
     if (rotateTimer) {
       clearInterval(rotateTimer);
       rotateTimer = null;
@@ -274,12 +283,14 @@ function renderPinnedCell(cell, zone, idx) {
 
   const empty = document.createElement('span');
   empty.className = 'pinned-empty';
-  empty.textContent = 'Selecciona una noticia y fíjala.';
+  empty.textContent = selectedNews
+    ? 'Noticia lista para fijar en esta zona.'
+    : 'Selecciona una noticia y fíjala.';
 
   const pinButton = document.createElement('button');
   pinButton.type = 'button';
   pinButton.className = 'pinned-pin';
-  pinButton.textContent = 'Fijar';
+  pinButton.textContent = selectedNews ? 'Fijar noticia' : 'Fijar';
   pinButton.disabled = !selectedNews;
   pinButton.addEventListener('click', () => {
     if (!selectedNews) return;
