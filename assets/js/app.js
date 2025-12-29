@@ -18,6 +18,10 @@ const listEl = document.getElementById('news-list');
 const noteEl = document.getElementById('news-note');
 
 const ufBody = document.getElementById('uf-table-body');
+const featuredLink = document.getElementById('featured-link');
+const featuredTitle = document.getElementById('featured-title');
+const featuredSummary = document.getElementById('featured-summary');
+const featuredMeta = document.getElementById('featured-meta');
 
 let itemsCache = [];
 let rotateIdx = 0;
