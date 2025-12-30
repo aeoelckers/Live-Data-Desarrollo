@@ -166,6 +166,14 @@ function renderSavedNews() {
   });
 }
 
+function updateSelectedNewsLabel() {
+  if (!selectedNews) {
+    selectedNewsLabel.textContent = 'Noticia seleccionada: --';
+    return;
+  }
+  selectedNewsLabel.textContent = `Noticia seleccionada: ${safeText(selectedNews.title)}`;
+}
+
 function renderList(items, heroIndex = 0) {
   listEl.innerHTML = '';
 
