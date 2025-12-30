@@ -2,8 +2,13 @@ name: Actualizar noticias PortalPortuario (titulares)
 
 on:
   workflow_dispatch:
+    inputs:
+      pages_branch:
+        description: "Branch que publica GitHub Pages (ej: main, work)"
+        required: false
+        default: ""
   schedule:
-    - cron: "0 * * * *" # cada hora (puedes cambiarlo a semanal si quieres)
+    - cron: "0 * * * *" # cada hora (UTC)
 
 permissions:
   contents: write
@@ -16,11 +21,40 @@ jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
+      - name: Resolve Pages branch
+        env:
+          INPUT_BRANCH: ${{ github.event.inputs.pages_branch }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          input_branch = (os.environ.get("INPUT_BRANCH") or "").strip()
+          repo = os.environ["REPO"]
+          token = os.environ["GH_TOKEN"]
+
+          branch = input_branch
+          if not branch:
+              url = f"https://api.github.com/repos/{repo}/pages"
+              req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+              with urllib.request.urlopen(req) as response:
+                  data = json.load(response)
+              branch = data.get("source", {}).get("branch") or "main"
+
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
+              env.write(f"PAGES_BRANCH={branch}\n")
+          print(f"Using Pages branch: {branch}")
+          PY
+
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: true
+          ref: ${{ env.PAGES_BRANCH }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -38,6 +72,7 @@ jobs:
 
       - name: Commit changes if any
         run: |
+          BRANCH_NAME="${PAGES_BRANCH}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -48,5 +83,5 @@ jobs:
           fi
 
           git commit -m "Update news.json (PortalPortuario)"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          git pull --rebase origin "${BRANCH_NAME}"
+          git push origin "HEAD:${BRANCH_NAME}"
