@@ -161,7 +161,7 @@ body {
 
 .news-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-columns: 1fr;
   gap: 18px;
   align-items: start;
 }
@@ -169,7 +169,7 @@ body {
 .hero {
   position: relative;
   display: block;
-  min-height: 340px;
+  min-height: 380px;
   border-radius: 20px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -219,7 +219,7 @@ body {
   border-radius: 18px;
   padding: 16px;
   border: 1px solid var(--border);
-  min-height: 340px;
+  min-height: 240px;
 }
 
 .sidebar-title {
@@ -246,6 +246,7 @@ body {
   background: rgba(5, 15, 30, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.08);
   transition: border-color 0.2s ease, transform 0.2s ease;
+  align-items: stretch;
 }
 
 .news-item:hover {
@@ -272,7 +273,7 @@ body {
   cursor: pointer;
   text-align: left;
   font: inherit;
-  align-items: center;
+  align-items: flex-start;
   min-width: 0;
 }
 
@@ -282,9 +283,9 @@ body {
 }
 
 .news-thumb {
-  width: 72px;
-  min-width: 72px;
-  height: 60px;
+  width: 120px;
+  min-width: 120px;
+  height: 90px;
   border-radius: 12px;
   background: linear-gradient(135deg, rgba(31, 182, 255, 0.3), rgba(58, 123, 213, 0.2));
   background-size: cover;
@@ -331,7 +332,7 @@ body {
   display: flex;
   gap: 8px;
   width: 100%;
-  justify-content: flex-end;
+  justify-content: flex-start;
   flex-wrap: wrap;
 }
 
@@ -541,10 +542,16 @@ body {
   }
 
   .hero {
-    min-height: 280px;
+    min-height: 300px;
   }
 
   .news-list {
     grid-template-columns: 1fr;
+  }
+
+  .news-thumb {
+    width: 90px;
+    min-width: 90px;
+    height: 70px;
   }
 }
