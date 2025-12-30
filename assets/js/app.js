@@ -146,14 +146,6 @@ function loadSavedNews() {
   });
 }
 
-function updateSelectedNewsLabel() {
-  if (!selectedNews) {
-    selectedNewsLabel.textContent = 'Noticia seleccionada: --';
-    return;
-  }
-  selectedNewsLabel.textContent = `Noticia seleccionada: ${safeText(selectedNews.title)}`;
-}
-
 function persistSavedNews() {
   localStorage.setItem(SAVED_NEWS_KEY, JSON.stringify(savedNews));
 }
