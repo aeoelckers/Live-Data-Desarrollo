@@ -23,6 +23,8 @@ const savedToggle = document.getElementById('saved-toggle');
 const savedPanel = document.getElementById('saved-panel');
 const savedListEl = document.getElementById('saved-list');
 const savedClear = document.getElementById('saved-clear');
+const zonesExport = document.getElementById('zones-export');
+const zonesImportInput = document.getElementById('zones-import-input');
 
 let itemsCache = [];
 let rotateIdx = 0;
@@ -34,6 +36,7 @@ let savedNews = [];
 
 const UFM2_STORAGE_KEY = 'ufm2Data';
 const SAVED_NEWS_KEY = 'savedNews';
+const STORAGE_EXPORT_KEY = 'informacion-desarrollo-backup';
 
 function formatDate(dateStr) {
   if (!dateStr) return 'Sin fecha';
@@ -117,6 +120,19 @@ function loadSavedNews() {
     console.error(error);
     return [];
   }
+  selectedNewsLabel.textContent = `Noticia seleccionada: ${safeText(selectedNews.title)}`;
+}
+
+function loadSavedNews() {
+  try {
+    const raw = localStorage.getItem(SAVED_NEWS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
 }
 
 function persistSavedNews() {
@@ -168,6 +184,97 @@ function renderSavedNews() {
     li.appendChild(removeButton);
     savedListEl.appendChild(li);
   });
+}
+
+function persistSavedNews() {
+  localStorage.setItem(SAVED_NEWS_KEY, JSON.stringify(savedNews));
+}
+
+function isNewsSaved(item) {
+  return savedNews.some((saved) => saved.link === item.link);
+}
+
+function renderSavedNews() {
+  savedListEl.innerHTML = '';
+
+  if (!savedNews.length) {
+    const li = document.createElement('li');
+    li.className = 'news-item empty';
+    li.textContent = 'Sin noticias guardadas';
+    savedListEl.appendChild(li);
+    return;
+  }
+
+  savedNews.forEach((item) => {
+    const li = document.createElement('li');
+    li.className = 'saved-item';
+
+    const link = document.createElement('a');
+    link.href = item.link || '#';
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = safeText(item.title) || 'Sin título';
+
+    const meta = document.createElement('span');
+    meta.className = 'saved-meta';
+    meta.textContent = item.pubDate ? formatDate(item.pubDate) : 'PortalPortuario';
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'saved-remove';
+    removeButton.textContent = 'Quitar';
+    removeButton.addEventListener('click', () => {
+      savedNews = savedNews.filter((saved) => saved.link !== item.link);
+      persistSavedNews();
+      renderSavedNews();
+      renderList(itemsCache, rotateIdx);
+    });
+
+    li.appendChild(link);
+    li.appendChild(meta);
+    li.appendChild(removeButton);
+    savedListEl.appendChild(li);
+  });
+}
+
+function exportUserData() {
+  const payload = {
+    version: 1,
+    ufm2: ufData,
+    savedNews
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${STORAGE_EXPORT_KEY}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function importUserData(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const payload = JSON.parse(reader.result);
+      if (Array.isArray(payload.ufm2)) {
+        ufData = payload.ufm2;
+        persistUfm2();
+        renderUfm2();
+      }
+      if (Array.isArray(payload.savedNews)) {
+        savedNews = payload.savedNews;
+        persistSavedNews();
+        renderSavedNews();
+        renderList(itemsCache, rotateIdx);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  reader.readAsText(file);
 }
 
 function renderList(items, heroIndex = 0) {
@@ -493,7 +600,17 @@ function refreshAll() {
   loadUfm2();
 }
 
-refreshBtn.addEventListener('click', refreshAll);
+function advanceHero() {
+  if (!itemsCache.length) return;
+  rotateIdx = (rotateIdx + 1) % itemsCache.length;
+  setHero(itemsCache[rotateIdx]);
+  renderList(itemsCache, rotateIdx);
+}
+
+refreshBtn.addEventListener('click', () => {
+  advanceHero();
+  refreshAll();
+});
 savedToggle.addEventListener('click', () => {
   const isHidden = savedPanel.hasAttribute('hidden');
   if (isHidden) {
@@ -510,6 +627,15 @@ savedClear.addEventListener('click', () => {
   persistSavedNews();
   renderSavedNews();
   renderList(itemsCache, rotateIdx);
+});
+
+zonesExport.addEventListener('click', exportUserData);
+zonesImportInput.addEventListener('change', (event) => {
+  const file = event.target.files && event.target.files[0];
+  if (file) {
+    importUserData(file);
+  }
+  event.target.value = '';
 });
 
 updateClock();

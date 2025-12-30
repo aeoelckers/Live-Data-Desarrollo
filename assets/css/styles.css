@@ -132,6 +132,21 @@ body {
   color: var(--muted2);
 }
 
+.zones-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.zones-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.zones-import {
+  cursor: pointer;
+}
+
 .panel-header h2 {
   margin: 0;
   font-size: 20px;

@@ -74,7 +74,16 @@
       <!-- UF/m² -->
       <section class="panel">
         <div class="panel-header">
-          <h2>Noticias Por Zona</h2>
+          <div class="zones-header">
+            <h2>Noticias Por Zona</h2>
+            <div class="zones-actions">
+              <button id="zones-export" class="btn secondary" type="button">Exportar</button>
+              <label class="btn secondary zones-import">
+                Importar
+                <input id="zones-import-input" type="file" accept="application/json" hidden />
+              </label>
+            </div>
+          </div>
           <p id="selected-news-label" class="selected-news-label">Noticia seleccionada: --</p>
         </div>
 
