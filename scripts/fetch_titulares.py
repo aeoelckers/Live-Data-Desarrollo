@@ -125,9 +125,29 @@ def parse_feed_items(xml_text: str):
     return items
 
 
+def fetch_og_image(url: str):
+    try:
+        response = get(url, timeout=20)
+        soup = BeautifulSoup(response.text, "lxml")
+        meta = soup.select_one('meta[property="og:image"]')
+        if meta and meta.get("content"):
+            return meta["content"].strip()
+    except Exception:
+        return None
+    return None
+
+
 def fetch_latest_items():
     response = get(FEED)
-    return parse_feed_items(response.text)
+    items = parse_feed_items(response.text)
+
+    missing = [item for item in items if not item.get("image")]
+    for item in missing[:5]:
+        og_image = fetch_og_image(item.get("link", ""))
+        if og_image:
+            item["image"] = og_image
+
+    return items
 
 
 def main():
