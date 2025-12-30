@@ -79,9 +79,13 @@ function setHero(item) {
     : 'PortalPortuario';
 
   const img = safeText(item.image);
-  heroImage.style.backgroundImage = img
-    ? `url("${img}")`
-    : 'linear-gradient(135deg, rgba(31,182,255,.35), rgba(58,123,213,.25))';
+  if (img) {
+    heroImage.style.backgroundImage = `url("${img}")`;
+    heroImage.classList.remove('no-image');
+  } else {
+    heroImage.style.backgroundImage = '';
+    heroImage.classList.add('no-image');
+  }
 }
 
 function highlightSelected() {
@@ -113,37 +117,6 @@ function loadSavedNews() {
     console.error(error);
     return [];
   }
-
-  savedNews.forEach((item) => {
-    const li = document.createElement('li');
-    li.className = 'saved-item';
-
-    const link = document.createElement('a');
-    link.href = item.link || '#';
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.textContent = safeText(item.title) || 'Sin título';
-
-    const meta = document.createElement('span');
-    meta.className = 'saved-meta';
-    meta.textContent = item.pubDate ? formatDate(item.pubDate) : 'PortalPortuario';
-
-    const removeButton = document.createElement('button');
-    removeButton.type = 'button';
-    removeButton.className = 'saved-remove';
-    removeButton.textContent = 'Quitar';
-    removeButton.addEventListener('click', () => {
-      savedNews = savedNews.filter((saved) => saved.link !== item.link);
-      persistSavedNews();
-      renderSavedNews();
-      renderList(itemsCache, rotateIdx);
-    });
-
-    li.appendChild(link);
-    li.appendChild(meta);
-    li.appendChild(removeButton);
-    savedListEl.appendChild(li);
-  });
 }
 
 function persistSavedNews() {
@@ -231,6 +204,10 @@ function renderList(items, heroIndex = 0) {
     const img = safeText(it.image);
     if (img) {
       thumb.style.backgroundImage = `url("${img}")`;
+      thumb.classList.remove('no-image');
+    } else {
+      thumb.style.backgroundImage = '';
+      thumb.classList.add('no-image');
     }
 
     const content = document.createElement('div');
