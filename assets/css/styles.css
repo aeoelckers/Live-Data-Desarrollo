@@ -108,6 +108,24 @@ body {
   margin-bottom: 16px;
 }
 
+.news-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 16px;
+}
+
+.news-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn.secondary {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+}
+
 .selected-news-label {
   margin: 0;
   font-size: 12px;
@@ -216,7 +234,7 @@ body {
   padding: 0;
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -228,6 +246,8 @@ body {
   background: rgba(5, 15, 30, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.08);
   transition: border-color 0.2s ease, transform 0.2s ease;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .news-item:hover {
@@ -288,6 +308,88 @@ body {
   margin: 0;
   font-size: 12px;
   color: var(--muted2);
+}
+
+.news-actions-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.news-save {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(31, 182, 255, 0.2);
+  color: var(--text);
+}
+
+.news-save.is-saved {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.saved-panel {
+  margin-bottom: 16px;
+  background: rgba(5, 15, 30, 0.45);
+  border-radius: 14px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.saved-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.saved-header h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.saved-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.saved-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(5, 15, 30, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.saved-item a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.saved-meta {
+  font-size: 12px;
+  color: var(--muted2);
+}
+
+.saved-remove {
+  align-self: flex-start;
+  border: none;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  cursor: pointer;
 }
 
 

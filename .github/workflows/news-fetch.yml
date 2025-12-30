@@ -8,7 +8,7 @@ on:
         required: false
         default: ""
   schedule:
-    - cron: "0 12 * * *" # una vez al día (UTC)
+    - cron: "0 * * * *" # cada hora (UTC)
 
 permissions:
   contents: write

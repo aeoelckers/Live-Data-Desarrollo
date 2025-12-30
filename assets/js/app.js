@@ -19,6 +19,10 @@ const noteEl = document.getElementById('news-note');
 
 const ufBody = document.getElementById('uf-table-body');
 const selectedNewsLabel = document.getElementById('selected-news-label');
+const savedToggle = document.getElementById('saved-toggle');
+const savedPanel = document.getElementById('saved-panel');
+const savedListEl = document.getElementById('saved-list');
+const savedClear = document.getElementById('saved-clear');
 
 let itemsCache = [];
 let rotateIdx = 0;
@@ -26,8 +30,10 @@ let rotateTimer = null;
 let selectedIdx = null;
 let selectedNews = null;
 let ufData = [];
+let savedNews = [];
 
 const UFM2_STORAGE_KEY = 'ufm2Data';
+const SAVED_NEWS_KEY = 'savedNews';
 
 function formatDate(dateStr) {
   if (!dateStr) return 'Sin fecha';
@@ -97,6 +103,77 @@ function updateSelectedNewsLabel() {
   selectedNewsLabel.textContent = `Noticia seleccionada: ${safeText(selectedNews.title)}`;
 }
 
+function loadSavedNews() {
+  try {
+    const raw = localStorage.getItem(SAVED_NEWS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
+
+function persistSavedNews() {
+  localStorage.setItem(SAVED_NEWS_KEY, JSON.stringify(savedNews));
+}
+
+function isNewsSaved(item) {
+  return savedNews.some((saved) => saved.link === item.link);
+}
+
+function renderSavedNews() {
+  savedListEl.innerHTML = '';
+
+  if (!savedNews.length) {
+    const li = document.createElement('li');
+    li.className = 'news-item empty';
+    li.textContent = 'Sin noticias guardadas';
+    savedListEl.appendChild(li);
+    return;
+  }
+
+  savedNews.forEach((item) => {
+    const li = document.createElement('li');
+    li.className = 'saved-item';
+
+    const link = document.createElement('a');
+    link.href = item.link || '#';
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = safeText(item.title) || 'Sin título';
+
+    const meta = document.createElement('span');
+    meta.className = 'saved-meta';
+    meta.textContent = item.pubDate ? formatDate(item.pubDate) : 'PortalPortuario';
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'saved-remove';
+    removeButton.textContent = 'Quitar';
+    removeButton.addEventListener('click', () => {
+      savedNews = savedNews.filter((saved) => saved.link !== item.link);
+      persistSavedNews();
+      renderSavedNews();
+      renderList(itemsCache, rotateIdx);
+    });
+
+    li.appendChild(link);
+    li.appendChild(meta);
+    li.appendChild(removeButton);
+    savedListEl.appendChild(li);
+  });
+}
+
+function updateSelectedNewsLabel() {
+  if (!selectedNews) {
+    selectedNewsLabel.textContent = 'Noticia seleccionada: --';
+    return;
+  }
+  selectedNewsLabel.textContent = `Noticia seleccionada: ${safeText(selectedNews.title)}`;
+}
+
 function renderList(items, heroIndex = 0) {
   listEl.innerHTML = '';
 
@@ -150,6 +227,35 @@ function renderList(items, heroIndex = 0) {
     button.appendChild(thumb);
     button.appendChild(content);
     li.appendChild(button);
+
+    const actions = document.createElement('div');
+    actions.className = 'news-actions-row';
+
+    const saveButton = document.createElement('button');
+    saveButton.type = 'button';
+    saveButton.className = 'news-save';
+    saveButton.textContent = isNewsSaved(it) ? 'Guardada' : 'Guardar';
+    if (isNewsSaved(it)) {
+      saveButton.classList.add('is-saved');
+    }
+    saveButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (isNewsSaved(it)) {
+        savedNews = savedNews.filter((saved) => saved.link !== it.link);
+      } else {
+        savedNews.push({
+          title: it.title,
+          link: it.link,
+          pubDate: it.pubDate
+        });
+      }
+      persistSavedNews();
+      renderSavedNews();
+      renderList(itemsCache, rotateIdx);
+    });
+
+    actions.appendChild(saveButton);
+    li.appendChild(actions);
     listEl.appendChild(li);
   });
 
@@ -381,8 +487,27 @@ function refreshAll() {
 }
 
 refreshBtn.addEventListener('click', refreshAll);
+savedToggle.addEventListener('click', () => {
+  const isHidden = savedPanel.hasAttribute('hidden');
+  if (isHidden) {
+    savedPanel.removeAttribute('hidden');
+    savedToggle.textContent = 'Ocultar';
+  } else {
+    savedPanel.setAttribute('hidden', '');
+    savedToggle.textContent = 'Guardadas';
+  }
+});
+
+savedClear.addEventListener('click', () => {
+  savedNews = [];
+  persistSavedNews();
+  renderSavedNews();
+  renderList(itemsCache, rotateIdx);
+});
 
 updateClock();
 setInterval(updateClock, 1000);
+savedNews = loadSavedNews();
+renderSavedNews();
 refreshAll();
 setInterval(refreshAll, REFRESH_MS);
