@@ -1,7 +1,14 @@
 {
   "source": "https://portalportuario.cl/feed/",
-  "lastUpdated": "2026-01-01T08:23:54.188790+00:00",
+  "lastUpdated": "2026-01-01T09:21:15.098379+00:00",
   "items": [
+    {
+      "title": "República Dominicana espera 120 cruceros para enero",
+      "link": "https://portalportuario.cl/republica-dominicana-espera-120-cruceros-para-enero/",
+      "pubDate": "2026-01-01T09:04:21+00:00",
+      "summary": "Por Redacción PortalPortuario @PortalPortuario República Dominicana espera la llegada de 120 cruceros durante enero de 2026, según el calendario oficial La entrada República Dominicana espera 120 cruceros para enero se publicó primero en PortalPortuario .",
+      "image": "https://portalportuario.cl/wp-content/uploads/2023/05/Crucero-en-Republica-Dominicana-.png"
+    },
     {
       "title": "Paso elevado hacia zona industrial del Puerto de Riga muestra avance de 80%",
       "link": "https://portalportuario.cl/paso-elevado-hacia-zona-industrial-del-puerto-de-riga-muestra-avance-de-80/",
@@ -35,7 +42,7 @@
       "link": "https://portalportuario.cl/peru-exportaciones-mineras-suman-usd-42-800-millones-hasta-septiembre/",
       "pubDate": "2025-12-31T23:00:21+00:00",
       "summary": "Por Redacción PortalPortuario / Agencia Andina @PortalPortuario Las exportaciones peruanas de productos mineros metálicos y no metálicos alcanzaron los USD La entrada Perú: Exportaciones mineras suman USD 42.800 millones hasta septiembre se publicó primero en PortalPortuario .",
-      "image": "https://portalportuario.cl/wp-content/uploads/2025/06/matarani-e1750556498255.jpg"
+      "image": null
     },
     {
       "title": "Búsqueda de pasajero al agua desde ferry en el Mar Báltico concluye sin éxito",
@@ -63,13 +70,6 @@
       "link": "https://portalportuario.cl/claves-y-tendencias-2026/",
       "pubDate": "2025-12-31T19:57:11+00:00",
       "summary": "Por Andrés Orrego Siebert @PortalPortuario India será un país clave en el desarrollo marítimo, portuario y logístico a nivel global, La entrada Claves y tendencias 2026 se publicó primero en PortalPortuario .",
-      "image": null
-    },
-    {
-      "title": "Retrospectiva 2025: Un año marcado por el huracán Donald y los vientos arancelarios",
-      "link": "https://portalportuario.cl/retrospectiva-2025-un-ano-marcado-por-el-huracan-donald-y-los-vientos-arancelarios/",
-      "pubDate": "2025-12-31T19:47:31+00:00",
-      "summary": "Por Andrés Orrego Siebert @PortalPortuario A fines de 2024, el mundo comenzaba a sentir un cambio en la atmósfera. Donald La entrada Retrospectiva 2025: Un año marcado por el huracán Donald y los vientos arancelarios se publicó primero en PortalPortuario .",
       "image": null
     }
   ]
